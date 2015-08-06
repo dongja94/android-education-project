@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <item
+        android:id="@+id/menu_mode_1"
+        android:orderInCategory="100"
+        android:title="ADD"
+        android:icon="@android:drawable/ic_input_add">
+    </item>
+    <item
+        android:id="@+id/menu_mode_2"
+        android:orderInCategory="101"
+        android:title="DELETE"
+        android:icon="@android:drawable/ic_input_delete">
+    </item>
+        <item
+        android:id="@+id/menu_mode_3"
+        android:orderInCategory="102"
+        android:title="GET"
+        android:icon="@android:drawable/ic_input_get">
+    </item>
+    
+</menu>

@@ -3,6 +3,9 @@ package com.example.samples2menu;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.view.ActionMode;
+import android.support.v7.widget.PopupMenu;
+import android.support.v7.widget.PopupMenu.OnMenuItemClickListener;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -25,6 +28,64 @@ public class MainActivity extends ActionBarActivity {
         registerForContextMenu(tv);
         ImageView iv = (ImageView)findViewById(R.id.imageView1);
         registerForContextMenu(iv);
+        Button btn = (Button)findViewById(R.id.button1);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				startSupportActionMode(new ActionMode.Callback() {
+					
+					@Override
+					public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+						return false;
+					}
+					
+					@Override
+					public void onDestroyActionMode(ActionMode mode) {
+						
+					}
+					
+					@Override
+					public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+						getMenuInflater().inflate(R.menu.action_mode_menu, menu);
+						mode.setTitle("Mode Menu....");
+						return true;
+					}
+					
+					@Override
+					public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+						switch(item.getItemId()) {
+						case R.id.menu_mode_1 :
+						case R.id.menu_mode_2 :
+						case R.id.menu_mode_3 :
+							Toast.makeText(MainActivity.this, "menu click", Toast.LENGTH_SHORT).show();
+							mode.finish();
+							return true;
+						}
+						return false;
+					}
+				});
+			}
+		});
+        
+        btn = (Button)findViewById(R.id.button2);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				PopupMenu menu = new PopupMenu(MainActivity.this, v);
+				menu.inflate(R.menu.popup_menu);
+				menu.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+					
+					@Override
+					public boolean onMenuItemClick(MenuItem item) {
+						Toast.makeText(MainActivity.this, "popup menu click", Toast.LENGTH_SHORT).show();
+						return true;
+					}
+				});
+				menu.show();
+			}
+		});
     }
 
     @Override
