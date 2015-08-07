@@ -5,12 +5,23 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.Path.Direction;
+import android.graphics.PathDashPathEffect;
+import android.graphics.PathEffect;
+import android.graphics.Shader;
+import android.graphics.Shader.TileMode;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 public class MyView extends View {
 
@@ -24,14 +35,45 @@ public class MyView extends View {
 	private static final float LINE_LENGTH = 300;
 	private static final float INTERVAL = 10;
 	float[] points;
-	Path shapePath, textPath;
+	Path shapePath, textPath, arrowPath;
 	String message = "Hello, Android";
 	
 	Bitmap mBitmap;
 	Matrix mMatrix;
+
+	GestureDetector mDetector;
 	
 	private void init() {
 		mPaint = new Paint();
+		mDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener(){
+			@Override
+			public boolean onDown(MotionEvent e) {
+				return true;
+			}
+			
+			@Override
+			public boolean onScroll(MotionEvent e1, MotionEvent e2,
+					float distanceX, float distanceY) {
+				mMatrix.postTranslate(-distanceX, -distanceY);
+				invalidate();
+				return true;
+			}
+			
+			@Override
+			public boolean onDoubleTap(MotionEvent e) {
+				mMatrix.postScale(2, 2, e.getX(), e.getY());
+				invalidate();
+				return true;
+			}
+			
+			@Override
+			public boolean onSingleTapConfirmed(MotionEvent e) {
+				mMatrix.postScale(0.5f, 0.5f, e.getX(), e.getY());
+				invalidate();
+				return true;
+			}
+		});
+		
 		initPoints();
 		initPath();
 		initBitmap();
@@ -44,6 +86,7 @@ public class MyView extends View {
 	private void initBitmap() {
 	
 		mMatrix = new Matrix();
+		mMatrix.reset();
 		mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.photo1);
 //		InputStream is = getResources().openRawResource(R.drawable.photo1);
 //		mBitmap = BitmapFactory.decodeStream(is);
@@ -72,21 +115,73 @@ public class MyView extends View {
 		
 		textPath = new Path();
 		textPath.addCircle(200, 200, 100, Direction.CW);
+		
+		arrowPath = new Path();
+		arrowPath.moveTo(0, 0);
+		arrowPath.lineTo(-5, -5);
+		arrowPath.lineTo(0, -5);
+		arrowPath.lineTo(5, 0);
+		arrowPath.lineTo(0, 5);
+		arrowPath.lineTo(-5, 5);;
+	}
+	
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		boolean isConsumed = mDetector.onTouchEvent(event);
+		return isConsumed | super.onTouchEvent(event);
 	}
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		
-		canvas.drawColor(Color.WHITE);
+		canvas.drawColor(Color.TRANSPARENT);
 		
 //		drawLineAndPoint(canvas);
 //		drawPath(canvas);
 //		drawText(canvas);
 //		drawBitmap(canvas);
-		drawBitmapMesh(canvas);
+//		drawBitmapMesh(canvas);
+//		drawPathEffect(canvas);
+//		drawShader(canvas);
+		
+		drawColorFilter(canvas);
 	}
 	
+	
+	private void drawColorFilter(Canvas canvas) {
+
+		ColorMatrix cm = new ColorMatrix();
+		cm.setSaturation(0);
+		ColorFilter cf = new ColorMatrixColorFilter(cm);
+		mPaint.setColorFilter(cf);
+		canvas.drawBitmap(mBitmap, mMatrix, mPaint);
+	}
+
+	private void drawShader(Canvas canvas) {
+		
+		int[] colors = {Color.RED, Color.YELLOW, Color.BLUE};
+		float[] positions = {0, 0.3f, 1};
+//		Shader shader = new LinearGradient(100, 200, 300, 200, Color.RED, Color.BLUE, TileMode.CLAMP);
+		Shader shader = new LinearGradient(100, 200, 300, 200, colors, positions, TileMode.CLAMP);
+		mPaint.setShader(shader);
+		canvas.drawCircle(200, 200, 100, mPaint);
+	}
+
+	private void drawPathEffect(Canvas canvas) {
+		mPaint.setStyle(Style.STROKE);
+		mPaint.setColor(Color.RED);
+		mPaint.setStrokeWidth(10);
+		
+		float[] intervals = {10, 10, 20, 10};
+		int phase = 10;
+//		PathEffect effect = new DashPathEffect(intervals, phase);
+		PathEffect effect = new PathDashPathEffect(arrowPath, 10, 0, PathDashPathEffect.Style.ROTATE);
+		mPaint.setPathEffect(effect);
+		
+		canvas.drawCircle(200, 200, 100, mPaint);
+	}
+
 	private void drawBitmapMesh(Canvas canvas) {
 		canvas.drawBitmapMesh(mBitmap, 3, 1, meshPoints, 0, null, 0, mPaint);
 	}
