@@ -18,6 +18,7 @@ import android.graphics.PathDashPathEffect;
 import android.graphics.PathEffect;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
+import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,11 +27,19 @@ import android.widget.Toast;
 public class MyView extends View {
 
 	public MyView(Context context) {
-		super(context);
-		
+		super(context);		
 		init();
 	}
 	
+	
+	
+	public MyView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		init();
+	}
+
+
+
 	Paint mPaint;
 	private static final float LINE_LENGTH = 300;
 	private static final float INTERVAL = 10;
@@ -125,6 +134,13 @@ public class MyView extends View {
 		arrowPath.lineTo(-5, 5);;
 	}
 	
+	
+	public void setBitmap(Bitmap bitmap) {
+		mBitmap = bitmap;
+		requestLayout();
+		invalidate();
+	}
+	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		boolean isConsumed = mDetector.onTouchEvent(event);
@@ -132,10 +148,40 @@ public class MyView extends View {
 	}
 	
 	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		int width = (getPaddingLeft() + getPaddingRight());
+		int height = (getPaddingTop() + getPaddingBottom());
+		if (mBitmap != null) {
+			width += mBitmap.getWidth();
+			height += mBitmap.getHeight();
+		}
+		
+		width = resolveSize(width, widthMeasureSpec);
+		height = resolveSize(height, heightMeasureSpec);
+		setMeasuredDimension(width, height);
+	}
+	
+	@Override
+	protected void onLayout(boolean changed, int left, int top, int right,
+			int bottom) {
+		super.onLayout(changed, left, top, right, bottom);
+		
+		int width = right - left;
+		int dx = width - getPaddingLeft() - getPaddingRight();
+		int height = bottom - top;
+		int dy = height - getPaddingTop() - getPaddingBottom();
+		if (mBitmap != null) {
+			dx = getPaddingLeft() + (dx - mBitmap.getWidth()) / 2;
+			dy = getPaddingTop() + (dy - mBitmap.getHeight()) / 2;
+		}
+		mMatrix.setTranslate(dx, dy);
+	}
+	
+	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		
-		canvas.drawColor(Color.TRANSPARENT);
+		canvas.drawColor(Color.WHITE);
 		
 //		drawLineAndPoint(canvas);
 //		drawPath(canvas);
@@ -151,10 +197,10 @@ public class MyView extends View {
 	
 	private void drawColorFilter(Canvas canvas) {
 
-		ColorMatrix cm = new ColorMatrix();
-		cm.setSaturation(0);
-		ColorFilter cf = new ColorMatrixColorFilter(cm);
-		mPaint.setColorFilter(cf);
+//		ColorMatrix cm = new ColorMatrix();
+//		cm.setSaturation(0);
+//		ColorFilter cf = new ColorMatrixColorFilter(cm);
+//		mPaint.setColorFilter(cf);
 		canvas.drawBitmap(mBitmap, mMatrix, mPaint);
 	}
 
