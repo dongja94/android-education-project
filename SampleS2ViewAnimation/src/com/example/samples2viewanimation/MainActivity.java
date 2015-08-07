@@ -6,6 +6,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -79,6 +80,67 @@ public class MainActivity extends ActionBarActivity {
 			}
 		});
 
+        btn = (Button)findViewById(R.id.btn_out);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Animation anim = AnimationUtils.loadAnimation(MainActivity.this, R.anim.slide_out_left);
+				anim.setAnimationListener(new AnimationListener() {
+					
+					@Override
+					public void onAnimationStart(Animation animation) {
+						
+					}
+					
+					@Override
+					public void onAnimationRepeat(Animation animation) {
+						
+					}
+					
+					@Override
+					public void onAnimationEnd(Animation animation) {
+						imageView.setVisibility(View.GONE);
+					}
+				});
+				imageView.startAnimation(anim);
+			}
+		});
+
+        btn = (Button)findViewById(R.id.btn_in);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Animation anim = AnimationUtils.loadAnimation(MainActivity.this, R.anim.slide_in_left);
+				imageView.setVisibility(View.VISIBLE);
+				imageView.startAnimation(anim);
+			}
+		});
+        
+        
+        btn = (Button)findViewById(R.id.btn_custom);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				MyAnimation anim = new MyAnimation();
+				anim.setDuration(1000);
+				imageView.startAnimation(anim);
+			}
+		});
+        
+        btn = (Button)findViewById(R.id.btn_3d);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				My3DAnimation anim = new My3DAnimation();
+				anim.setDuration(1000);
+				imageView.startAnimation(anim);
+			}
+		});
+        
     }
 
     @Override
