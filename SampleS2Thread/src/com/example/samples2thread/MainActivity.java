@@ -1,5 +1,6 @@
 package com.example.samples2thread;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -56,9 +57,51 @@ public class MainActivity extends ActionBarActivity {
 			
 			@Override
 			public void onClick(View v) {
-				new Thread(progressRunnable).start();
+//				new Thread(progressRunnable).start();
+				new MyTask().execute();
 			}
 		});
+    }
+    
+    class MyTask extends AsyncTask<String, Integer, Boolean> {
+
+    	@Override
+    	protected void onPreExecute() {
+    		super.onPreExecute();
+			messageView.setText("progress start...");
+			progressView.setMax(100);
+			progressView.setProgress(0);
+    	}
+    	
+    	@Override
+    	protected Boolean doInBackground(String... params) {
+			for (int i = 0; i <= 20; i++) {
+				int progress = i * 5;
+				publishProgress(progress);
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+    		return true;
+    	}
+    
+    	@Override
+    	protected void onProgressUpdate(Integer... values) {
+    		super.onProgressUpdate(values);
+    		int progress = values[0];
+			messageView.setText("progress : " + progress);
+			progressView.setProgress(progress);
+    	}
+    	
+    	@Override
+    	protected void onPostExecute(Boolean result) {
+    		super.onPostExecute(result);
+			messageView.setText("progress done");
+			progressView.setProgress(100);
+    	}
     }
     
     Runnable progressRunnable = new Runnable() {
