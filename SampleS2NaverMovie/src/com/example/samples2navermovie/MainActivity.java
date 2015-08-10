@@ -19,14 +19,17 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.begentgroup.xmlparser.XMLParser;
+import com.example.samples2navermovie.NetworkManager.OnResultListener;
 
 
 public class MainActivity extends ActionBarActivity {
 
 	ListView listView;
-	ArrayAdapter<MovieItem> mAdapter;
+//	ArrayAdapter<MovieItem> mAdapter;
+	MyAdapter mAdapter;
 	EditText inputView;
 	
     @Override
@@ -36,7 +39,8 @@ public class MainActivity extends ActionBarActivity {
         inputView = (EditText)findViewById(R.id.edit_input);
         
         listView = (ListView)findViewById(R.id.listView1);
-        mAdapter = new ArrayAdapter<MovieItem>(this, android.R.layout.simple_list_item_1);
+//        mAdapter = new ArrayAdapter<MovieItem>(this, android.R.layout.simple_list_item_1);
+        mAdapter = new MyAdapter();
         listView.setAdapter(mAdapter);
         
         Button btn = (Button)findViewById(R.id.btn_search);
@@ -46,7 +50,22 @@ public class MainActivity extends ActionBarActivity {
 			public void onClick(View v) {
 				String keyword = inputView.getText().toString();
 				if (!TextUtils.isEmpty(keyword)) {
-					new MovieTask().execute(keyword);
+//					new MovieTask().execute(keyword);
+					NetworkManager.getInstance().getNaverMovie(keyword, new OnResultListener<NaverMovie>() {
+						
+						@Override
+						public void onSuccess(NaverMovie result) {
+//							for (MovieItem item : result.items) {
+//								mAdapter.add(item);
+//							}
+							mAdapter.addAll(result.items);
+						}
+						
+						@Override
+						public void onFail(int code) {
+							Toast.makeText(MainActivity.this, "fail...", Toast.LENGTH_SHORT).show();
+						}
+					});
 				}
 			}
 		});
@@ -83,9 +102,10 @@ public class MainActivity extends ActionBarActivity {
     	protected void onPostExecute(NaverMovie result) {
     		super.onPostExecute(result);
     		if (result != null) {
-    			for (MovieItem item : result.items) {
-    				mAdapter.add(item);
-    			}
+    			mAdapter.addAll(result.items);
+//    			for (MovieItem item : result.items) {
+//    				mAdapter.add(item);
+//    			}
     		}
     	}
     }
