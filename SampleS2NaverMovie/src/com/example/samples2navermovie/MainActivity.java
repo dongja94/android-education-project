@@ -8,6 +8,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -15,7 +17,8 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -42,6 +45,19 @@ public class MainActivity extends ActionBarActivity {
 //        mAdapter = new ArrayAdapter<MovieItem>(this, android.R.layout.simple_list_item_1);
         mAdapter = new MyAdapter();
         listView.setAdapter(mAdapter);
+        
+        
+        listView.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				MovieItem item = (MovieItem)listView.getItemAtPosition(position);
+				Intent intent = new Intent(MainActivity.this, BrowserActivity.class);
+				intent.setData(Uri.parse(item.link));
+				startActivity(intent);
+			}
+		});
         
         Button btn = (Button)findViewById(R.id.btn_search);
         btn.setOnClickListener(new View.OnClickListener() {
