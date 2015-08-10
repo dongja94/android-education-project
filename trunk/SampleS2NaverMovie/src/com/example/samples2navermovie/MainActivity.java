@@ -67,21 +67,33 @@ public class MainActivity extends ActionBarActivity {
 				String keyword = inputView.getText().toString();
 				if (!TextUtils.isEmpty(keyword)) {
 //					new MovieTask().execute(keyword);
-					NetworkManager.getInstance().getNaverMovie(keyword, new OnResultListener<NaverMovie>() {
-						
+					NetworkManager.getInstance().getNaverMovie(MainActivity.this, keyword, 1, 50, new OnResultListener<NaverMovie>() {
+
 						@Override
 						public void onSuccess(NaverMovie result) {
-//							for (MovieItem item : result.items) {
-//								mAdapter.add(item);
-//							}
 							mAdapter.addAll(result.items);
 						}
-						
+
 						@Override
 						public void onFail(int code) {
-							Toast.makeText(MainActivity.this, "fail...", Toast.LENGTH_SHORT).show();
+							Toast.makeText(MainActivity.this, "fail....", Toast.LENGTH_SHORT).show();
 						}
 					});
+//					NetworkManager.getInstance().getNaverMovie(keyword, new OnResultListener<NaverMovie>() {
+//						
+//						@Override
+//						public void onSuccess(NaverMovie result) {
+////							for (MovieItem item : result.items) {
+////								mAdapter.add(item);
+////							}
+//							mAdapter.addAll(result.items);
+//						}
+//						
+//						@Override
+//						public void onFail(int code) {
+//							Toast.makeText(MainActivity.this, "fail...", Toast.LENGTH_SHORT).show();
+//						}
+//					});
 				}
 			}
 		});
