@@ -3,6 +3,8 @@ package com.example.samples2database;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.samples2database.DBConstant.PersonTable;
+
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -26,11 +28,11 @@ public class DBManager extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		String sql = "CREATE TABLE persontbl(" +
-				"_id INTEGER PRIMARY KEY AUTOINCREMENT," +
-				"name TEXT," +
-				"age INTEGER," +
-				"address TEXT);";
+		String sql = "CREATE TABLE "+PersonTable.TABLE_NAME+"(" +
+				PersonTable._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+				PersonTable.NAME + " TEXT," +
+				PersonTable.AGE + " INTEGER," +
+				PersonTable.ADDRESS + " TEXT);";
 		db.execSQL(sql);
 	}
 
@@ -43,11 +45,11 @@ public class DBManager extends SQLiteOpenHelper {
 	public void addPerson(Person p) {
 		SQLiteDatabase db = getWritableDatabase();
 		ContentValues values = new ContentValues();
-		values.put("name",p.name);
-		values.put("age",p.age);
-		values.put("address", p.address);
+		values.put(PersonTable.NAME,p.name);
+		values.put(PersonTable.AGE,p.age);
+		values.put(PersonTable.ADDRESS, p.address);
 		
-		db.insert("persontbl", null, values);
+		db.insert(PersonTable.TABLE_NAME, null, values);
 		
 	}
 	
@@ -58,10 +60,10 @@ public class DBManager extends SQLiteOpenHelper {
 		
 		while(c.moveToNext()) {
 			Person p = new Person();
-			p._id = c.getLong(c.getColumnIndex("_id"));
-			p.name = c.getString(c.getColumnIndex("name"));
-			p.age = c.getInt(c.getColumnIndex("age"));
-			p.address = c.getString(c.getColumnIndex("address"));
+			p._id = c.getLong(c.getColumnIndex(PersonTable._ID));
+			p.name = c.getString(c.getColumnIndex(PersonTable.NAME));
+			p.age = c.getInt(c.getColumnIndex(PersonTable.AGE));
+			p.address = c.getString(c.getColumnIndex(PersonTable.ADDRESS));
 			list.add(p);
 		}
 		
@@ -73,14 +75,15 @@ public class DBManager extends SQLiteOpenHelper {
 	public Cursor getPersonCursor(String keyword) {
 		SQLiteDatabase db = getReadableDatabase();
 		Cursor c = null;
+		String[] columns = { PersonTable._ID, PersonTable.NAME, PersonTable.AGE, PersonTable.ADDRESS };
+		String selection = null;
+		String[] selectionArgs = null;
 		if (!TextUtils.isEmpty(keyword)) {
-			String sql = "SELECT _id,name,age,address FROM persontbl WHERE name = ?";
-			c = db.rawQuery(sql, new String[] {keyword});
-			
-		} else {
-			String sql = "SELECT _id,name,age,address FROM persontbl";
-			c = db.rawQuery(sql, null);
-		}
+			selection = PersonTable.NAME + " = ?";
+			selectionArgs = new String[] {keyword};
+		} 
+		c = db.query(PersonTable.TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+		
 		return c;
 	}
 }
