@@ -4,12 +4,14 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v4.widget.SimpleCursorAdapter.ViewBinder;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.samples2database.DBConstant.PersonTable;
 
@@ -19,6 +21,7 @@ public class MainActivity extends ActionBarActivity {
 	ListView listView;
 //	ArrayAdapter<Person> mAdapter;
 	SimpleCursorAdapter mAdapter;
+	int nameIndex = -1;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +32,20 @@ public class MainActivity extends ActionBarActivity {
         String[] from = {PersonTable.NAME, PersonTable.ADDRESS};
         int[] to = {R.id.text_name, R.id.text_address};
         mAdapter = new SimpleCursorAdapter(this, R.layout.view_item, null, from, to, 0);
-        
+        mAdapter.setViewBinder(new ViewBinder() {
+			
+			@Override
+			public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+				if (columnIndex == nameIndex) {
+					TextView tv = (TextView)view;
+					String name = cursor.getString(columnIndex);
+					int age = cursor.getInt(cursor.getColumnIndex(PersonTable.AGE));
+					tv.setText("name : " + name + "(" + age + ")");
+					return true;
+				}
+				return false;
+			}
+		});
         listView.setAdapter(mAdapter);
         
         Button btn = (Button)findViewById(R.id.btn_add);
@@ -48,6 +64,7 @@ public class MainActivity extends ActionBarActivity {
     	super.onResume();
 
     	Cursor c = DBManager.getInstance().getPersonCursor(null);
+    	nameIndex = c.getColumnIndex(PersonTable.NAME);
     	mAdapter.changeCursor(c);
     	
 //    	mAdapter.clear();
