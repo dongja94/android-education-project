@@ -83,9 +83,16 @@ public class MainActivity extends ActionBarActivity {
 									}
 
 								});
+						return;
 					}
 				}
-
+				mHandler.postDelayed(new Runnable() {
+					
+					@Override
+					public void run() {
+						refreshView.onRefreshComplete();
+					}
+				}, 20);
 				// mHandler.postDelayed(new Runnable() {
 				//
 				// @Override
