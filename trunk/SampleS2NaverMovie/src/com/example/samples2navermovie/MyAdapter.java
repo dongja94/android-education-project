@@ -10,6 +10,29 @@ import android.widget.BaseAdapter;
 
 public class MyAdapter extends BaseAdapter {
 	List<MovieItem> items = new ArrayList<MovieItem>();
+	String keyword;
+	int totalCount;
+	public static final int INVAILD_START_INDEX = -1;
+	
+	public void setKeyword(String keyword) {
+		this.keyword = keyword;
+	}
+	public String getKeyword() {
+		return keyword;
+	}
+	
+	public void setTotalCount(int totalCount) {
+		this.totalCount = totalCount;
+	}
+	
+	public int getStartOffset() {
+		return (items.size() < totalCount) ? items.size() + 1 : INVAILD_START_INDEX;
+	}
+	
+	public void clear() {
+		items.clear();
+		notifyDataSetChanged();
+	}
 	
 	public void addAll(List<MovieItem> items)  {
 		this.items.addAll(items);
