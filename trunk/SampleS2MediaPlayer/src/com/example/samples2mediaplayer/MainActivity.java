@@ -2,10 +2,13 @@ package com.example.samples2mediaplayer;
 
 import java.io.IOException;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -242,6 +245,16 @@ public class MainActivity extends ActionBarActivity {
 			}
 		});
         
+        btn = (Button)findViewById(R.id.btn_list);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent  intent = new Intent(MainActivity.this, MusicListActivity.class);
+				startActivityForResult(intent, 0);
+			}
+		});
+        
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 			
 			@Override
@@ -260,7 +273,41 @@ public class MainActivity extends ActionBarActivity {
 			}
 		});
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    	super.onActivityResult(requestCode, resultCode, data);
+    	if (requestCode == 0 && resultCode == Activity.RESULT_OK) {
+    		Uri uri = data.getData();
+    		mPlayer.reset();
+    		mState = PlayState.IDLE;
+    		try {
+				mPlayer.setDataSource(this, uri);
+				mState = PlayState.INITILIZED;
+				mPlayer.prepare();
+				mState = PlayState.PREPARED;
+				progressView.setMax(mPlayer.getDuration());
+				progressView.setProgress(0);
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				e.printStackTrace();
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}
+    }
     
+    @Override
+    protected void onPause() {
+    	super.onPause();
+		if (mState == PlayState.STARTED) {
+			mPlayer.pause();
+			mState = PlayState.PAUSED;
+		}
+    }
     @Override
     protected void onDestroy() {
     	super.onDestroy();
