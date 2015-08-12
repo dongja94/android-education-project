@@ -2,7 +2,9 @@ package com.example.samples2mediaplayer;
 
 import java.io.IOException;
 
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +14,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Toast;
@@ -34,7 +38,10 @@ public class MainActivity extends ActionBarActivity {
 	
 	MediaPlayer mPlayer;
 	
-	SeekBar progressView;
+	SeekBar progressView, volumeView;
+	AudioManager mAM;
+	CheckBox muteView;
+	
 	Handler mHandler = new Handler(Looper.getMainLooper());
 	private static final int INTERVAL = 100;
 	
@@ -53,11 +60,86 @@ public class MainActivity extends ActionBarActivity {
 			}
 		}
 	};
+	
+	float volume = 1.0f;
+	
+	Runnable volumeUp = new Runnable() {
+		
+		@Override
+		public void run() {
+			if (volume < 1.0f) {
+				mPlayer.setVolume(volume, volume);
+				volume += 0.1f;
+				mHandler.postDelayed(this, INTERVAL);
+			} else {
+				volume = 1.0f;
+				mPlayer.setVolume(volume, volume);
+			}
+		}
+	};
+	
+	Runnable volumeDown = new Runnable() {
+		
+		@Override
+		public void run() {
+			if (volume > 0) {
+				mPlayer.setVolume(volume, volume);
+				volume -= 0.1f;
+				mHandler.postDelayed(this, INTERVAL);
+			} else {
+				volume = 0;
+				mPlayer.setVolume(volume, volume);
+			}
+		}
+	};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         progressView = (SeekBar)findViewById(R.id.seek_progress);
+        volumeView = (SeekBar)findViewById(R.id.seek_volume);
+        mAM = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        int maxVolume = mAM.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int currentVolume = mAM.getStreamVolume(AudioManager.STREAM_MUSIC);
+        volumeView.setMax(maxVolume);
+        volumeView.setProgress(currentVolume);
+        volumeView.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				
+			}
+			
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+				
+			}
+			
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress,
+					boolean fromUser) {
+				if (fromUser) {
+					mAM.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
+				}
+			}
+		});
+        
+        muteView = (CheckBox)findViewById(R.id.check_mute);
+        muteView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if (isChecked) {
+//					mPlayer.setVolume(0, 0);
+					mHandler.removeCallbacks(volumeUp);
+					mHandler.post(volumeDown);
+				} else {
+//					mPlayer.setVolume(1, 1);
+					mHandler.removeCallbacks(volumeDown);
+					mHandler.post(volumeUp);
+				}
+			}
+		});
         
         mPlayer = new MediaPlayer();
         mState = PlayState.IDLE;
