@@ -120,6 +120,16 @@ public class MainActivity extends ActionBarActivity {
 			}
 		});
     }
+    
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
+    	if (mPlayer != null) {
+    		mPlayer.release();
+    		mPlayer = null;
+    		mState = PlayState.END;
+    	}
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
