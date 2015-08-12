@@ -5,9 +5,13 @@ import java.util.List;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +19,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Gallery;
 
 
 public class MainActivity extends ActionBarActivity implements SurfaceHolder.Callback {
@@ -23,11 +28,17 @@ public class MainActivity extends ActionBarActivity implements SurfaceHolder.Cal
 	SurfaceHolder mHolder;
 	Camera mCamera;
 	int direction = CameraInfo.CAMERA_FACING_FRONT;
+	Gallery gallery;
+	MyAdapter mAdapter;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        gallery = (Gallery)findViewById(R.id.gallery1);
+        mAdapter = new MyAdapter();
+        gallery.setAdapter(mAdapter);
+        
         surfaceView = (SurfaceView)findViewById(R.id.surfaceView1);
         surfaceView.getHolder().addCallback(this);
         surfaceView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -74,8 +85,52 @@ public class MainActivity extends ActionBarActivity implements SurfaceHolder.Cal
 				
 			}
 		});
+        
+        btn = (Button)findViewById(R.id.btn_picture);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				mCamera.takePicture(shutter, raw, jpeg);
+			}
+		});
     }
     
+    
+    Camera.ShutterCallback shutter = new Camera.ShutterCallback() {
+		
+		@Override
+		public void onShutter() {
+			mHandler.postDelayed(new Runnable() {
+				
+				@Override
+				public void run() {
+					mCamera.startPreview();
+				}
+			}, 500);
+		}
+	};
+	
+	Handler mHandler = new Handler(Looper.getMainLooper());
+	
+	Camera.PictureCallback raw = new Camera.PictureCallback() {
+		
+		@Override
+		public void onPictureTaken(byte[] data, Camera camera) {
+			
+		}
+	};
+	
+	Camera.PictureCallback jpeg = new Camera.PictureCallback() {
+		
+		@Override
+		public void onPictureTaken(byte[] data, Camera camera) {
+			BitmapFactory.Options opts = new BitmapFactory.Options();
+			opts.inSampleSize = 4;
+			Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length, opts);
+			mAdapter.add(bm);
+		}
+	};
     @Override
     protected void onDestroy() {
     	super.onDestroy();
