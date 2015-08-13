@@ -1,5 +1,8 @@
 package com.example.samples2googlemap;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
@@ -8,11 +11,17 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.CancelableCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -28,13 +37,49 @@ public class MainActivity extends ActionBarActivity implements
 	GoogleMap mMap;
 	LocationManager mLM;
 	String mProvider = LocationManager.GPS_PROVIDER;
-
+	Map<ItemData,Marker> mMarkerResolver = new HashMap<ItemData,Marker>();
+	Map<Marker,ItemData> mItemResolver = new HashMap<Marker,ItemData>();
+	
+	ListView listView;
+	ArrayAdapter<ItemData> mAdapter;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		listView = (ListView)findViewById(R.id.listView1);
+		mAdapter = new ArrayAdapter<ItemData>(this, android.R.layout.simple_list_item_1);
+		listView.setAdapter(mAdapter);
+		listView.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				ItemData data = (ItemData)listView.getItemAtPosition(position);
+				Marker marker = mMarkerResolver.get(data);
+				moveMap(marker);
+			}
+
+		});
 		setupMapIfNeeded();
 		mLM = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+	}
+	
+	private void moveMap(final Marker marker) {
+		CameraUpdate update = CameraUpdateFactory.newLatLng(marker.getPosition());
+		mMap.animateCamera(update, new CancelableCallback() {
+			
+			@Override
+			public void onFinish() {
+				marker.showInfoWindow();
+			}
+			
+			@Override
+			public void onCancel() {
+				
+			}
+		});
+		
 	}
 
 	LocationListener mListener = new LocationListener() {
@@ -143,16 +188,31 @@ public class MainActivity extends ActionBarActivity implements
 		addMarker(latLng.latitude, latLng.longitude);
 	}
 
+	int mId = 0;
 	private void addMarker(double lat, double lng) {
 		MarkerOptions options = new MarkerOptions();
-		options.position(new LatLng(lat, lng));
+		mId++;
+		ItemData data = new ItemData();
+		data.title = "my title" + mId;
+		data.description = "my description" + mId;
+		data.subtitle = "my subtitle" + mId;
+		data.lat = lat;
+		data.lng = lng;
+		mAdapter.add(data);
+		
+		options.position(new LatLng(data.lat, data.lng));
 		options.icon(BitmapDescriptorFactory
 				.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
 		options.anchor(0.5f, 1);
-		options.title("My Marker");
-		options.snippet("description...");
+		options.title(data.title);
+		options.snippet(data.description);
 		options.draggable(true);
 		Marker marker = mMap.addMarker(options);
+		
+		
+		mMarkerResolver.put(data, marker);
+		mItemResolver.put(marker, data);
+		
 	}
 
 	@Override
@@ -164,7 +224,8 @@ public class MainActivity extends ActionBarActivity implements
 
 	@Override
 	public void onInfoWindowClick(Marker marker) {
-		Toast.makeText(this, "infowindow : " + marker.getTitle(), Toast.LENGTH_SHORT).show();
+		ItemData data = mItemResolver.get(marker);
+		Toast.makeText(this, "infowindow : " + data.subtitle, Toast.LENGTH_SHORT).show();
 		marker.hideInfoWindow();
 	}
 }
