@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBarActivity;
@@ -32,14 +34,75 @@ public class MainActivity extends ActionBarActivity {
 			
 			@Override
 			public void onClick(View v) {
-				sendNotification();
+				sendNotification(null);
+			}
+		});
+        
+        btn = (Button)findViewById(R.id.btn_progress);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				sendProgress();
+			}
+		});
+        
+        btn = (Button)findViewById(R.id.btn_style);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				NotificationCompat.InboxStyle style = new NotificationCompat.InboxStyle();
+				style.setBigContentTitle("Email....");
+				style.addLine("mail 1");
+				style.addLine("mail 2");
+				style.setSummaryText("email summary...");
+				sendNotification(style);
 			}
 		});
     }
     
+    
+    Handler mHandler = new Handler(Looper.getMainLooper());
+    
+    int progress = 0;
+    
+    Runnable progressRunnable = new Runnable() {
+		
+		@Override
+		public void run() {
+			if (progress <= 100) {
+		    	NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this);
+		    	builder.setSmallIcon(android.R.drawable.ic_dialog_info);
+		    	builder.setTicker("download...");
+		    	builder.setContentTitle("image download : " + progress);
+		    	builder.setContentText("download...");
+		    	builder.setDefaults(NotificationCompat.DEFAULT_ALL);
+		    	builder.setOngoing(true);
+		    	builder.setProgress(100, progress, false);
+		    	
+		    	mNM.notify(100, builder.build());
+	
+		    	progress+=5;
+		    	
+		    	mHandler.postDelayed(this, 500);
+			} else {
+				mNM.cancel(100);
+			}
+	    	
+	    	
+		}
+		
+	};
+	
+    private void sendProgress() {
+    	mHandler.removeCallbacks(progressRunnable);
+    	progress = 0;
+    	mHandler.post(progressRunnable);    	
+    }
     private int mId = 1;
     
-    private void sendNotification() {
+    private void sendNotification(NotificationCompat.Style style) {
     	NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
     	builder.setSmallIcon(android.R.drawable.ic_dialog_alert);
     	builder.setTicker("notification test...");
@@ -48,12 +111,16 @@ public class MainActivity extends ActionBarActivity {
     	builder.setContentText("text..." + mId);
     	builder.setDefaults(NotificationCompat.DEFAULT_ALL);
     	builder.setAutoCancel(true);
-    	
+
+    	if (style != null) {
+    		builder.setStyle(style);
+    	}
     	Intent intent = new Intent(this, NotificationActivity.class);
     	intent.setData(Uri.parse("myscheme://mydomain/"+mId));
     	intent.putExtra("message", "message : " + mId);
     	TaskStackBuilder tsb = TaskStackBuilder.create(this);
     	tsb.addNextIntent(intent);
+    	
     	
     	PendingIntent pi = tsb.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
     	
