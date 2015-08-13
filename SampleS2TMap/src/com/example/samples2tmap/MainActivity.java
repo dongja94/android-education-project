@@ -1,16 +1,37 @@
 package com.example.samples2tmap;
 
+import java.util.ArrayList;
+
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.PointF;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Toast;
 
+import com.skp.Tmap.TMapData;
+import com.skp.Tmap.TMapData.FindAllPOIListenerCallback;
+import com.skp.Tmap.TMapMarkerItem;
+import com.skp.Tmap.TMapPOIItem;
+import com.skp.Tmap.TMapPoint;
 import com.skp.Tmap.TMapView;
+import com.skp.Tmap.TMapView.OnCalloutRightButtonClickCallback;
+import com.skp.Tmap.TMapView.OnClickListenerCallback;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -18,17 +39,96 @@ public class MainActivity extends ActionBarActivity {
 	TMapView mapView;
 	LocationManager mLM;
 	String mProvider = LocationManager.GPS_PROVIDER;
+	EditText keywordView;
+	ListView listView;
+	ArrayAdapter<POIItem> mAdapter;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
+        keywordView = (EditText)findViewById(R.id.edit_keyword);
+        listView = (ListView)findViewById(R.id.listView1);
+        mAdapter = new ArrayAdapter<POIItem>(this, android.R.layout.simple_list_item_1);
+        listView.setAdapter(mAdapter);
+        listView.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				POIItem item = (POIItem)listView.getItemAtPosition(position);
+				moveMap(item.poi.getPOIPoint().getLatitude(), item.poi.getPOIPoint().getLongitude());
+			}
+		});
         mapView = (TMapView)findViewById(R.id.mapView);
         mLM = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         
         new InitTask().execute();
         
+        Button btn = (Button)findViewById(R.id.btn_marker);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				addMarker();
+			}
+		});
+        
+        btn = (Button)findViewById(R.id.btn_search);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				String keyword = keywordView.getText().toString();
+				if (!TextUtils.isEmpty(keyword)) {
+					searchKeyword(keyword);
+				}
+			}
+
+		});
+    }
+	private void searchKeyword(String keyword) {
+		TMapData data = new TMapData();
+		data.findAllPOI(keyword, new FindAllPOIListenerCallback() {
+			
+			@Override
+			public void onFindAllPOI(final ArrayList<TMapPOIItem> poilist) {
+				runOnUiThread(new Runnable() {
+					
+					@Override
+					public void run() {
+						mapView.addTMapPOIItem(poilist);
+						for (TMapPOIItem poi : poilist) {
+							POIItem item = new POIItem();
+							item.poi = poi;
+							mAdapter.add(item);
+						}
+					}
+				});
+			}
+		});
+	}
+    
+    int id = 0;
+    private void addMarker() {
+    	TMapPoint point = mapView.getCenterPoint();
+//    	TMapPoint pt = new TMapPoint(point.getLatitude(), point.getLongitude());
+    	TMapMarkerItem item = new TMapMarkerItem();
+    	
+    	item.setTMapPoint(point);
+    	Bitmap bitmap = ((BitmapDrawable)getResources().getDrawable(R.drawable.ic_launcher)).getBitmap();
+    	item.setIcon(bitmap);
+    	item.setPosition(0.5f, 1);
+    	item.setCalloutTitle("my marker");
+    	item.setCalloutSubTitle("marker subtitle");
+    	item.setCanShowCallout(true);
+    	Bitmap left = ((BitmapDrawable)getResources().getDrawable(android.R.drawable.ic_dialog_info)).getBitmap();
+    	item.setCalloutLeftImage(left);
+    	
+    	Bitmap right = ((BitmapDrawable)getResources().getDrawable(android.R.drawable.ic_input_get)).getBitmap();
+    	item.setCalloutRightButtonImage(right);
+    	
+    	mapView.addMarkerItem("id" + id++, item);
     }
     
     class InitTask extends AsyncTask<String, Integer, Boolean> {
@@ -51,6 +151,30 @@ public class MainActivity extends ActionBarActivity {
     	mapView.setTrafficInfo(true);
     	mapView.setMapType(TMapView.MAPTYPE_STANDARD);
     	mapView.setLanguage(TMapView.LANGUAGE_KOREAN);
+    	mapView.setOnCalloutRightButtonClickListener(new OnCalloutRightButtonClickCallback() {
+			
+			@Override
+			public void onCalloutRightButton(TMapMarkerItem item) {
+				Toast.makeText(MainActivity.this, "item : " + item.getCalloutTitle(), Toast.LENGTH_SHORT).show();
+			}
+		});
+    	
+    	mapView.setOnClickListenerCallBack(new OnClickListenerCallback() {
+			
+			@Override
+			public boolean onPressUpEvent(ArrayList<TMapMarkerItem> arg0,
+					ArrayList<TMapPOIItem> arg1, TMapPoint arg2, PointF arg3) {
+				Toast.makeText(MainActivity.this, "up", Toast.LENGTH_SHORT).show();
+				return false;
+			}
+			
+			@Override
+			public boolean onPressEvent(ArrayList<TMapMarkerItem> arg0,
+					ArrayList<TMapPOIItem> arg1, TMapPoint arg2, PointF arg3) {
+				Toast.makeText(MainActivity.this, "press", Toast.LENGTH_SHORT).show();
+				return false;
+			}
+		});
     }
 
     LocationListener mListener = new LocationListener() {
