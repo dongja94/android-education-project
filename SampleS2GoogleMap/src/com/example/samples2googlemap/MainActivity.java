@@ -162,6 +162,7 @@ public class MainActivity extends ActionBarActivity implements
 		mMap.setOnMapClickListener(this);
 		mMap.setOnMarkerClickListener(this);
 		mMap.setOnInfoWindowClickListener(this);
+		mMap.setInfoWindowAdapter(new MyInfoWindow(this, mItemResolver));
 	}
 
 	@Override
