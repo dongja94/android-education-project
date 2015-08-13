@@ -22,13 +22,16 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.skp.Tmap.TMapData;
 import com.skp.Tmap.TMapData.FindAllPOIListenerCallback;
+import com.skp.Tmap.TMapData.FindPathDataListenerCallback;
 import com.skp.Tmap.TMapMarkerItem;
 import com.skp.Tmap.TMapPOIItem;
 import com.skp.Tmap.TMapPoint;
+import com.skp.Tmap.TMapPolyLine;
 import com.skp.Tmap.TMapView;
 import com.skp.Tmap.TMapView.OnCalloutRightButtonClickCallback;
 import com.skp.Tmap.TMapView.OnClickListenerCallback;
@@ -42,6 +45,10 @@ public class MainActivity extends ActionBarActivity {
 	EditText keywordView;
 	ListView listView;
 	ArrayAdapter<POIItem> mAdapter;
+	RadioGroup group;
+	
+	TMapPoint startPoint, endPoint;
+	
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +56,7 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
         keywordView = (EditText)findViewById(R.id.edit_keyword);
         listView = (ListView)findViewById(R.id.listView1);
+        group = (RadioGroup)findViewById(R.id.radioGroup1);
         mAdapter = new ArrayAdapter<POIItem>(this, android.R.layout.simple_list_item_1);
         listView.setAdapter(mAdapter);
         listView.setOnItemClickListener(new OnItemClickListener() {
@@ -85,6 +93,36 @@ public class MainActivity extends ActionBarActivity {
 				}
 			}
 
+		});
+        
+        btn = (Button)findViewById(R.id.btn_route);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (startPoint != null && endPoint != null) {
+					route(startPoint, endPoint);
+				} else {
+					Toast.makeText(MainActivity.this, "start or end null",Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+    }
+    
+    private void route(TMapPoint start, TMapPoint end) {
+    	TMapData data = new TMapData();
+    	data.findPathData(start, end, new FindPathDataListenerCallback() {
+			
+			@Override
+			public void onFindPathData(final TMapPolyLine path) {
+				runOnUiThread(new Runnable() {
+					
+					@Override
+					public void run() {
+						mapView.addTMapPath(path);
+					}
+				});
+			}
 		});
     }
 	private void searchKeyword(String keyword) {
@@ -164,7 +202,17 @@ public class MainActivity extends ActionBarActivity {
 			@Override
 			public boolean onPressUpEvent(ArrayList<TMapMarkerItem> arg0,
 					ArrayList<TMapPOIItem> arg1, TMapPoint arg2, PointF arg3) {
-				Toast.makeText(MainActivity.this, "up", Toast.LENGTH_SHORT).show();
+				if (arg1 != null && arg1.size() > 0) {
+					TMapPoint point = arg1.get(0).getPOIPoint();
+					switch(group.getCheckedRadioButtonId()) {
+					case R.id.radio_start :
+						startPoint = point;
+						break;
+					case R.id.radio_end :
+						endPoint = point;
+						break;
+					}
+				}
 				return false;
 			}
 			
