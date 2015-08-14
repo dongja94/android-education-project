@@ -28,6 +28,7 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/provider"/>
         </receiver>
+        <service android:name="UpdateService"></service>
     </application>
 
 </manifest>
