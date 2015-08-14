@@ -1,5 +1,9 @@
 package com.example.samples2facebook;
 
+import java.util.Arrays;
+
+import org.json.JSONObject;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -14,6 +18,10 @@ import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.GraphRequest.Callback;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
@@ -26,6 +34,12 @@ public class MainActivity extends ActionBarActivity {
 	LoginManager mLM;
 	Button btnLogin;
 	AccessTokenTracker tracker;
+	enum ActionState {
+		NOT_ACTION,
+		POST,
+		READ
+	}
+	ActionState state = ActionState.NOT_ACTION;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +57,13 @@ public class MainActivity extends ActionBarActivity {
 				AccessToken token = AccessToken.getCurrentAccessToken();
 				
 				Toast.makeText(MainActivity.this, "login success : " + token.getUserId(), Toast.LENGTH_SHORT).show();
+				if (state == ActionState.POST) {
+					sendPost();
+					state = ActionState.NOT_ACTION;
+				} if (state == ActionState.READ) {
+					readPost();
+					state = ActionState.NOT_ACTION;
+				}
 			}
 			
 			@Override
@@ -86,6 +107,40 @@ public class MainActivity extends ActionBarActivity {
 			}
 		});
         
+        
+        btn = (Button)findViewById(R.id.btn_post);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				AccessToken token = AccessToken.getCurrentAccessToken();
+				if (token != null) {
+					if (token.getPermissions().contains("publish_actions")) {
+						sendPost();
+						return;
+					}
+				}
+				state = ActionState.POST;
+				mLM.logInWithPublishPermissions(MainActivity.this, Arrays.asList("publish_actions"));
+			}
+		});
+        
+        btn = (Button)findViewById(R.id.btn_home);
+        btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				AccessToken token = AccessToken.getCurrentAccessToken();
+				if (token != null) {
+					if (token.getPermissions().contains("user_posts")) {
+						readPost();
+						return;
+					}
+				}
+				state = ActionState.READ;
+				mLM.logInWithReadPermissions(MainActivity.this, Arrays.asList("user_posts"));
+			}
+		});
         tracker = new AccessTokenTracker() {
 			
 			@Override
@@ -100,6 +155,51 @@ public class MainActivity extends ActionBarActivity {
 		};
     }
 
+    private void sendPost() {
+    	AccessToken token = AccessToken.getCurrentAccessToken();
+    	String path = "/me/feed";
+    	Bundle params = new Bundle();
+    	params.putString("message", "facebook post test");
+		params.putString("link", "http://developers.facebook.com/docs/android");
+        params.putString("picture", "https://scontent.xx.fbcdn.net/hphotos-xpa1/t39.2178-6/851567_1813371155468532_1182857230_n.png");
+        params.putString("name", "Hello Facebook");
+        params.putString("description", "The 'Hello Facebook' sample  showcases simple …");
+
+        
+    	GraphRequest request = new GraphRequest(token, path, params, HttpMethod.POST, new Callback() {
+			
+			@Override
+			public void onCompleted(GraphResponse response) {
+				JSONObject obj = response.getJSONObject();
+				if (obj != null) {
+					Toast.makeText(MainActivity.this, "id : " + obj.optString("id"), Toast.LENGTH_SHORT).show();
+				} else {
+					Toast.makeText(MainActivity.this, "errof : " + response.getError().getErrorMessage(), Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+    	
+    	request.executeAsync();
+    }
+    
+    private void readPost() {
+    	AccessToken token = AccessToken.getCurrentAccessToken();
+    	String path = "/me/feed";
+    	GraphRequest request = new GraphRequest(token, path, null, HttpMethod.GET, new Callback() {
+			
+			@Override
+			public void onCompleted(GraphResponse response) {
+				JSONObject obj = response.getJSONObject();
+				if (obj != null) {
+					Toast.makeText(MainActivity.this, "result : " + obj.toString(), Toast.LENGTH_SHORT).show();
+				} else {
+					Toast.makeText(MainActivity.this, "errof : " + response.getError().getErrorMessage(), Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+    	request.executeAsync();
+    }
+    
     @Override
     protected void onDestroy() {
     	super.onDestroy();
