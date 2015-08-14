@@ -130,8 +130,10 @@ public class XMPPManager {
 			mXmppConnection.login(userId, password);
 			initializeAfterLogin();
 			return true;
-		} catch (XMPPException | IOException e) {
+		} catch (XMPPException e ) {
 			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();			
 		}
 		return false;
 	}
